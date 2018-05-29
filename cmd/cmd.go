@@ -17,7 +17,7 @@ import (
 var (
 	name        = "micro"
 	description = "A cloud-native toolkit"
-	version     = "0.8.0"
+	version     = "0.11.1"
 )
 
 func setup(app *ccli.App) {
@@ -66,16 +66,6 @@ func setup(app *ccli.App) {
 			Name:   "web_address",
 			Usage:  "Set the web UI address e.g 0.0.0.0:8082",
 			EnvVar: "MICRO_WEB_ADDRESS",
-		},
-		ccli.IntFlag{
-			Name:   "register_ttl",
-			EnvVar: "MICRO_REGISTER_TTL",
-			Usage:  "Register TTL in seconds",
-		},
-		ccli.IntFlag{
-			Name:   "register_interval",
-			EnvVar: "MICRO_REGISTER_INTERVAL",
-			Usage:  "Register interval in seconds",
 		},
 		ccli.StringFlag{
 			Name:   "api_handler",

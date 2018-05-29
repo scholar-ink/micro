@@ -43,30 +43,30 @@ var _ server.Option
 
 // Client API for Command service
 
-type CommandClient interface {
+type CommandService interface {
 	Help(ctx context.Context, in *HelpRequest, opts ...client.CallOption) (*HelpResponse, error)
 	Exec(ctx context.Context, in *ExecRequest, opts ...client.CallOption) (*ExecResponse, error)
 }
 
-type commandClient struct {
+type commandService struct {
 	c           client.Client
 	serviceName string
 }
 
-func NewCommandClient(serviceName string, c client.Client) CommandClient {
+func NewCommandService(serviceName string, c client.Client) CommandService {
 	if c == nil {
 		c = client.NewClient()
 	}
 	if len(serviceName) == 0 {
 		serviceName = "go.micro.bot"
 	}
-	return &commandClient{
+	return &commandService{
 		c:           c,
 		serviceName: serviceName,
 	}
 }
 
-func (c *commandClient) Help(ctx context.Context, in *HelpRequest, opts ...client.CallOption) (*HelpResponse, error) {
+func (c *commandService) Help(ctx context.Context, in *HelpRequest, opts ...client.CallOption) (*HelpResponse, error) {
 	req := c.c.NewRequest(c.serviceName, "Command.Help", in)
 	out := new(HelpResponse)
 	err := c.c.Call(ctx, req, out, opts...)
@@ -76,7 +76,7 @@ func (c *commandClient) Help(ctx context.Context, in *HelpRequest, opts ...clien
 	return out, nil
 }
 
-func (c *commandClient) Exec(ctx context.Context, in *ExecRequest, opts ...client.CallOption) (*ExecResponse, error) {
+func (c *commandService) Exec(ctx context.Context, in *ExecRequest, opts ...client.CallOption) (*ExecResponse, error) {
 	req := c.c.NewRequest(c.serviceName, "Command.Exec", in)
 	out := new(ExecResponse)
 	err := c.c.Call(ctx, req, out, opts...)
@@ -94,17 +94,25 @@ type CommandHandler interface {
 }
 
 func RegisterCommandHandler(s server.Server, hdlr CommandHandler, opts ...server.HandlerOption) {
-	s.Handle(s.NewHandler(&Command{hdlr}, opts...))
+	type command interface {
+		Help(ctx context.Context, in *HelpRequest, out *HelpResponse) error
+		Exec(ctx context.Context, in *ExecRequest, out *ExecResponse) error
+	}
+	type Command struct {
+		command
+	}
+	h := &commandHandler{hdlr}
+	s.Handle(s.NewHandler(&Command{h}, opts...))
 }
 
-type Command struct {
+type commandHandler struct {
 	CommandHandler
 }
 
-func (h *Command) Help(ctx context.Context, in *HelpRequest, out *HelpResponse) error {
+func (h *commandHandler) Help(ctx context.Context, in *HelpRequest, out *HelpResponse) error {
 	return h.CommandHandler.Help(ctx, in, out)
 }
 
-func (h *Command) Exec(ctx context.Context, in *ExecRequest, out *ExecResponse) error {
+func (h *commandHandler) Exec(ctx context.Context, in *ExecRequest, out *ExecResponse) error {
 	return h.CommandHandler.Exec(ctx, in, out)
 }
