@@ -17,7 +17,7 @@ import (
 var (
 	name        = "micro"
 	description = "A cloud-native toolkit"
-	version     = "0.11.1"
+	version     = "0.13.0"
 )
 
 func setup(app *ccli.App) {
@@ -119,6 +119,9 @@ func setup(app *ccli.App) {
 	before := app.Before
 
 	app.Before = func(ctx *ccli.Context) error {
+		if err := before(ctx); err != nil {
+			return err
+		}
 		if len(ctx.String("api_handler")) > 0 {
 			api.Handler = ctx.String("api_handler")
 		}
@@ -161,12 +164,23 @@ func setup(app *ccli.App) {
 			p.Init(ctx)
 		}
 
-		return before(ctx)
+		return nil
 	}
 }
 
+// Init initalised the command line
 func Init() {
-	app := cmd.App()
+	Setup(cmd.App())
+
+	cmd.Init(
+		cmd.Name(name),
+		cmd.Description(description),
+		cmd.Version(version),
+	)
+}
+
+// Setup sets up a cli.App
+func Setup(app *ccli.App) {
 	app.Commands = append(app.Commands, api.Commands()...)
 	app.Commands = append(app.Commands, bot.Commands()...)
 	app.Commands = append(app.Commands, cli.Commands()...)
@@ -176,10 +190,4 @@ func Init() {
 	app.Action = func(context *ccli.Context) { ccli.ShowAppHelp(context) }
 
 	setup(app)
-
-	cmd.Init(
-		cmd.Name(name),
-		cmd.Description(description),
-		cmd.Version(version),
-	)
 }
