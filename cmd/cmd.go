@@ -161,14 +161,16 @@ func setup(app *ccli.App) {
 		}
 
 		for _, p := range plugins {
-			p.Init(ctx)
+			if err := p.Init(ctx); err != nil {
+				return err
+			}
 		}
 
 		return nil
 	}
 }
 
-// Init initalised the command line
+// Init initialised the command line
 func Init() {
 	Setup(cmd.App())
 
